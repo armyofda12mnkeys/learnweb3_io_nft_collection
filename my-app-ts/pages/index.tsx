@@ -22,7 +22,7 @@ export default function Home() {
   // tokenIdsMinted keeps track of the number of tokenIds that have been minted
   const [tokenIdsMinted, setTokenIdsMinted] = useState("0");
   // Create a reference to the Web3 Modal (used for connecting to Metamask) which persists as long as the page is open
-  const web3ModalRef = useRef();
+  const web3ModalRef = useRef<Web3Modal>();
 
   /**
    * presaleMint: Mint an NFT during the presale
@@ -183,13 +183,15 @@ export default function Home() {
       // call the owner function from the contract
       const _owner = await nftContract.owner();
       // We will get the signer now to extract the address of the currently connected MetaMask account
-      const signer = await getProviderOrSigner(true);
+      const signer = await getProviderOrSigner(true) as providers.JsonRpcSigner; //since can do both
       // Get the address associated to the signer which is connected to  MetaMask
-      const address = await signer.getAddress();
-      if (address.toLowerCase() === _owner.toLowerCase()) {
-        setIsOwner(true);
+      if(signer) {
+        const address = await signer.getAddress();
+        if (address.toLowerCase() === _owner.toLowerCase()) {
+          setIsOwner(true);
+        }
       }
-    } catch (err) {
+    } catch (err:any) {
       console.error(err.message);
     }
   };
@@ -229,27 +231,29 @@ export default function Home() {
   const getProviderOrSigner = async (needSigner = false) => {
     // Connect to Metamask
     // Since we store `web3Modal` as a reference, we need to access the `current` value to get access to the underlying object
-    const provider = await web3ModalRef.current.connect();
-    const web3Provider = new providers.Web3Provider(provider);
+    if (web3ModalRef.current) {
+      const provider = await web3ModalRef.current.connect();
+      const web3Provider = new providers.Web3Provider(provider);
 
-    // If user is not connected to the Goerli network, let them know and throw an error
-    const { chainId } = await web3Provider.getNetwork();
-    if (chainId !== 5) {
-      window.alert("Change the network to Goerli");
-      throw new Error("Change network to Goerli");
-    }
+      // If user is not connected to the Goerli network, let them know and throw an error
+      const { chainId } = await web3Provider.getNetwork();
+      if (chainId !== 5) {
+        window.alert("Change the network to Goerli");
+        throw new Error("Change network to Goerli");
+      }
 
-    if (needSigner) {
-      const signer = web3Provider.getSigner();
-      return signer;
+      if (needSigner) {
+        const signer = web3Provider.getSigner();
+        return signer;
+      }
+      return web3Provider;
     }
-    return web3Provider;
   };
 
   // useEffects are used to react to changes in state of the website
   // The array at the end of function call represents what state changes will trigger this effect
   // In this case, whenever the value of `walletConnected` changes - this effect will be called
-  useEffect(() => {
+  useEffect( () => {
     // if wallet is not connected, create a new instance of Web3Modal and connect the MetaMask wallet
     if (!walletConnected) {
       // Assign the Web3Modal class to the reference object by setting it's `current` value
@@ -262,7 +266,14 @@ export default function Home() {
       connectWallet();
 
       // Check if presale has started and ended
-      const _presaleStarted = checkIfPresaleStarted();
+      
+      let _presaleStarted;
+      (async () => {
+        _presaleStarted = await checkIfPresaleStarted();
+      })();
+      
+
+
       if (_presaleStarted) {
         checkIfPresaleEnded();
       }
