@@ -263,22 +263,28 @@ export default function Home() {
         providerOptions: {},
         disableInjectedProvider: false,
       });
+      //should this be await too?
       connectWallet();
 
       // Check if presale has started and ended
       
+      //const _presaleStarted = checkIfPresaleStarted()
       let _presaleStarted;
       (async () => {
         _presaleStarted = await checkIfPresaleStarted();
-      })();
-      
-
+      })();    
 
       if (_presaleStarted) {
-        checkIfPresaleEnded();
+        //checkIfPresaleEnded();
+        (async () => {
+          await checkIfPresaleEnded();
+        })();
       }
 
-      getTokenIdsMinted();
+      //getTokenIdsMinted();
+      (async () => {
+        await getTokenIdsMinted();
+      })();
 
       // Set an interval which gets called every 5 seconds to check presale has ended
       const presaleEndedInterval = setInterval(async function () {
@@ -296,7 +302,7 @@ export default function Home() {
         await getTokenIdsMinted();
       }, 5 * 1000);
     }
-  }, [walletConnected]);
+  }, [walletConnected, checkIfPresaleStarted, checkIfPresaleEnded, getTokenIdsMinted, connectWallet]);
 
   /*
       renderButton: Returns a button based on the state of the dapp
