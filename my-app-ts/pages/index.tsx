@@ -253,7 +253,7 @@ export default function Home() {
   // useEffects are used to react to changes in state of the website
   // The array at the end of function call represents what state changes will trigger this effect
   // In this case, whenever the value of `walletConnected` changes - this effect will be called
-  useEffect( () => {
+  useEffect(() => {
     // if wallet is not connected, create a new instance of Web3Modal and connect the MetaMask wallet
     if (!walletConnected) {
       // Assign the Web3Modal class to the reference object by setting it's `current` value
@@ -263,28 +263,15 @@ export default function Home() {
         providerOptions: {},
         disableInjectedProvider: false,
       });
-      //should this be await too?
       connectWallet();
 
       // Check if presale has started and ended
-      
-      //const _presaleStarted = checkIfPresaleStarted()
-      let _presaleStarted;
-      (async () => {
-        _presaleStarted = await checkIfPresaleStarted();
-      })();    
-
-      if (_presaleStarted) {
-        //checkIfPresaleEnded();
-        (async () => {
-          await checkIfPresaleEnded();
-        })();
+      checkIfPresaleStarted();
+      if (presaleStarted) {
+        checkIfPresaleEnded();
       }
 
-      //getTokenIdsMinted();
-      (async () => {
-        await getTokenIdsMinted();
-      })();
+      getTokenIdsMinted();
 
       // Set an interval which gets called every 5 seconds to check presale has ended
       const presaleEndedInterval = setInterval(async function () {
@@ -302,7 +289,7 @@ export default function Home() {
         await getTokenIdsMinted();
       }, 5 * 1000);
     }
-  }, [walletConnected, checkIfPresaleStarted, checkIfPresaleEnded, getTokenIdsMinted, connectWallet]);
+  }, [walletConnected]);
 
   /*
       renderButton: Returns a button based on the state of the dapp
